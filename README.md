@@ -1,6 +1,4 @@
 
-Built by https://www.blackbox.ai
-
 ---
 
 # Predictive Model Web App
