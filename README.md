@@ -4,7 +4,7 @@
 # Predictive Model Web App
 
 ## Project Overview
-This project is a simple web application built with Flask that provides predictive modeling capabilities. It allows users to submit a set of numerical values and receive a prediction based on those values. The current implementation uses a mock prediction function that returns the average of the input values with some random variation. This mock setup can be replaced later with a more sophisticated predictive model.
+This project is a simple web application built with Flask that provides predictive modeling capabilities. It allows users to submit a set of numerical values and receive a prediction based on those values. The current implementation uses a 4 diffrent  trained deep learning models function that returns the predicted value as well as the  MAE and RMSE values.
 
 ## Installation
 
