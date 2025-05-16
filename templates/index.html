@@ -1,98 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Series Forecasting</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Time Series Forecasting</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
 </head>
 <body class="bg-gray-50">
-    <div class="container mx-auto px-4 py-8 max-w-3xl">
-        <h1 class="text-3xl font-semibold text-gray-800 mb-8 text-center">Time Series Forecasting</h1>
-        
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Select Model Type</label>
-                <select id="modelType" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                    <option value="PM2.5">PM2.5 Forecaster</option>
-                    <option value="CO">CO Forecaster</option>
-                    <option value="NO2">NO2 Forecaster</option>
-                    <option value="CO2">CO2 Forecaster</option>
-                </select>
-            </div>
+  <div class="container mx-auto px-4 py-8 max-w-3xl">
+    <h1 class="text-3xl font-semibold text-gray-800 mb-8 text-center">
+      Time Series Forecasting
+    </h1>
 
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Enter Last 10 Hours Data Points</label>
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    <!-- Input fields will be generated here -->
-                </div>
-            </div>
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <!-- MODEL SELECT -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Select Model Type
+        </label>
+        <select id="modelType"
+                class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+          <option value="PM2.5">PM2.5 Forecaster</option>
+          <option value="CO">CO Forecaster</option>
+          <option value="NO2">NO2 Forecaster</option>
+          <option value="CO2">CO2 Forecaster</option>
+        </select>
+      </div>
 
-            <button id="predict" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
-                Predict Next Hour
-            </button>
-
-            <div id="result" class="mt-6 hidden">
-                <h3 class="text-lg font-medium text-gray-900 mb-2">Prediction Result</h3>
-                <div class="p-4 bg-gray-50 rounded-md">
-                    <p class="text-gray-700">Next hour prediction is: <span id="prediction" class="font-semibold"></span></p>
-                </div>
-            </div>
+      <!-- LAST 10 HOURS -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Enter Last 10 Hours Data Points
+        </label>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <!-- JS will inject 10 inputs here -->
         </div>
-    </div>
+      </div>
 
-    <script>
-        // Generate input fields
-        const inputContainer = document.querySelector('.grid');
-        for (let i = 0; i < 10; i++) {
-            const div = document.createElement('div');
-            div.innerHTML = `
-                <label class="block text-sm font-medium text-gray-700 mb-1">Hour ${10-i}</label>
-                <input type="number" step="0.01" class="data-input w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required>
-            `;
-            inputContainer.appendChild(div);
+      <!-- REAL VALUE (optional) -->
+      <div class="mb-6">
+        <label for="realValue" class="block text-sm font-medium text-gray-700 mb-2">
+          Real Value (optional)
+        </label>
+        <input
+          id="realValue"
+          type="number"
+          step="0.01"
+          placeholder="Enter actual next-hour value"
+          class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <!-- PREDICT BUTTON -->
+      <button id="predict"
+              class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+        Predict Next Hour
+      </button>
+
+      <!-- RESULT CARD -->
+      <div id="result" class="mt-6 hidden">
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Prediction Result</h3>
+        <div class="p-4 bg-gray-50 rounded-md">
+          <p class="text-gray-700">
+            Next hour prediction is:
+            <span id="prediction" class="font-semibold"></span>
+          </p>
+          <p id="rmse" class="text-gray-700 mt-2 hidden">
+            RMSE value is: <span id="rmse-val" class="font-semibold"></span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1) Generate the 10 input fields
+    const inputContainer = document.querySelector('.grid');
+    for (let i = 0; i < 10; i++) {
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Hour ${10 - i}
+        </label>
+        <input type="number" step="0.01"
+               class="data-input w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+               required />
+      `;
+      inputContainer.appendChild(div);
+    }
+
+    // 2) Handle click → predict
+    document.getElementById('predict').addEventListener('click', async () => {
+      const inputs    = [...document.querySelectorAll('.data-input')]
+                          .map(i => parseFloat(i.value));
+      const realValue = parseFloat(document.getElementById('realValue').value);
+      const modelType = document.getElementById('modelType').value;
+
+      // Validate 10 data points
+      if (inputs.some(isNaN)) {
+        alert('Please fill in all 10 data fields');
+        return;
+      }
+
+      // Build payload
+      const payload = { values: inputs, model_type: modelType };
+      if (!isNaN(realValue)) {
+        payload.real_value = realValue;
+      }
+
+      try {
+        const res  = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+          throw new Error(data.error);
         }
 
-        // Handle prediction
-        document.getElementById('predict').addEventListener('click', async () => {
-            const inputs = [...document.querySelectorAll('.data-input')].map(input => parseFloat(input.value));
-            const modelType = document.getElementById('modelType').value;
+        // Show result card
+        document.getElementById('result').classList.remove('hidden');
+        document.getElementById('prediction')
+                .textContent = data.prediction.toFixed(2);
 
-            if (inputs.some(isNaN)) {
-                alert('Please fill in all fields with valid numbers');
-                return;
-            }
+        // Conditionally show RMSE
+        if (data.rmse !== undefined) {
+          document.getElementById('rmse').classList.remove('hidden');
+          document.getElementById('rmse-val')
+                  .textContent = data.rmse.toFixed(2);
+        } else {
+          document.getElementById('rmse').classList.add('hidden');
+        }
 
-            try {
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        values: inputs,
-                        model_type: modelType
-                    })
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    document.getElementById('result').classList.remove('hidden');
-                    document.getElementById('prediction').textContent = data.prediction.toFixed(2);
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            } catch (error) {
-                alert('Error making prediction: ' + error.message);
-            }
-        });
-    </script>
+      } catch (err) {
+        alert('Error making prediction: ' + err.message);
+      }
+    });
+  </script>
 </body>
 </html>
