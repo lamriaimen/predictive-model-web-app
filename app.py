@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
+import joblib
 
 app = Flask(__name__)
 
@@ -13,7 +14,12 @@ models = {
     'NO2':   tf.keras.models.load_model('models/NO2_Forecaster.keras'),
 }
 
-scaler = MinMaxScaler(feature_range=(0,1))
+scalers = {
+    'PM2.5': joblib.load('scalers/PM25_scaler.save'),
+    'C6H6':  joblib.load('scalers/C6H6_scaler.save'),
+    'CO':    joblib.load('scalers/CO_scaler.save'),
+    'NO2':   joblib.load('scalers/NO2_scaler.save'),
+}
 
 @app.route('/')
 def home():
@@ -26,6 +32,8 @@ def predict():
         values     = np.array([float(x) for x in data['values']], dtype=np.float32)
         model_type = data['model_type']
         model      = models.get(model_type)
+        scaler     = scalers.get(model_type)
+
         if model is None:
             return jsonify(success=False, error='Invalid model type')
 
