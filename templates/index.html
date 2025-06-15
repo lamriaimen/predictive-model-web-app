@@ -2,10 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Time Series Forecasting</title>
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     body { font-family: 'Inter', sans-serif; }
   </style>
@@ -25,9 +29,9 @@
         <select id="modelType"
                 class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
           <option value="PM2.5">PM2.5 Forecaster</option>
+          <option value="C6H6">C6H6 Forecaster</option>
           <option value="CO">CO Forecaster</option>
           <option value="NO2">NO2 Forecaster</option>
-          <option value="CO2">CO2 Forecaster</option>
         </select>
       </div>
 
@@ -37,7 +41,7 @@
           Enter Last 10 Hours Data Points
         </label>
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <!-- JS will inject 10 inputs here -->
+          <!-- JS injects 10 inputs here -->
         </div>
       </div>
 
@@ -68,6 +72,9 @@
           <p class="text-gray-700">
             Next hour prediction is:
             <span id="prediction" class="font-semibold"></span>
+            <!-- ATMO badge -->
+            <span id="status-badge"
+                  class="ml-2 px-2 py-1 text-xs font-semibold rounded-full hidden"></span>
           </p>
           <p id="rmse" class="text-gray-700 mt-2 hidden">
             RMSE value is: <span id="rmse-val" class="font-semibold"></span>
@@ -78,7 +85,19 @@
   </div>
 
   <script>
-    // 1) Generate the 10 input fields
+    /* ──────────────────────────────────────────────────────────────
+       Style classes for the ATMO badge
+    ────────────────────────────────────────────────────────────── */
+    const STATUS_STYLES = {
+      "Bon":                 "bg-cyan-100 text-cyan-800",
+      "Moyen":               "bg-emerald-100 text-emerald-800",
+      "Dégradé":             "bg-yellow-100 text-yellow-800",
+      "Mauvais":             "bg-red-200 text-red-800",
+      "Très mauvais":        "bg-rose-200 text-rose-800",
+      "Extrêmement mauvais": "bg-purple-200 text-purple-800"
+    };
+
+    /* Generate the 10 input fields */
     const inputContainer = document.querySelector('.grid');
     for (let i = 0; i < 10; i++) {
       const div = document.createElement('div');
@@ -93,49 +112,56 @@
       inputContainer.appendChild(div);
     }
 
-    // 2) Handle click → predict
+    /* Handle click → predict */
     document.getElementById('predict').addEventListener('click', async () => {
       const inputs    = [...document.querySelectorAll('.data-input')]
                           .map(i => parseFloat(i.value));
       const realValue = parseFloat(document.getElementById('realValue').value);
       const modelType = document.getElementById('modelType').value;
 
-      // Validate 10 data points
+      /* Validate 10 data points */
       if (inputs.some(isNaN)) {
         alert('Please fill in all 10 data fields');
         return;
       }
 
-      // Build payload
+      /* Build payload */
       const payload = { values: inputs, model_type: modelType };
-      if (!isNaN(realValue)) {
-        payload.real_value = realValue;
-      }
+      if (!isNaN(realValue)) payload.real_value = realValue;
 
       try {
         const res  = await fetch('/predict', {
-          method: 'POST',
+          method : 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body   : JSON.stringify(payload)
         });
         const data = await res.json();
+        if (!data.success) throw new Error(data.error);
 
-        if (!data.success) {
-          throw new Error(data.error);
-        }
-
-        // Show result card
+        /* --- Update UI --- */
         document.getElementById('result').classList.remove('hidden');
-        document.getElementById('prediction')
-                .textContent = data.prediction.toFixed(2);
+        document.getElementById('prediction').textContent =
+          data.prediction.toFixed(2);
 
-        // Conditionally show RMSE
+        /* RMSE */
         if (data.rmse !== undefined) {
           document.getElementById('rmse').classList.remove('hidden');
-          document.getElementById('rmse-val')
-                  .textContent = data.rmse.toFixed(2);
+          document.getElementById('rmse-val').textContent =
+            data.rmse.toFixed(2);
         } else {
           document.getElementById('rmse').classList.add('hidden');
+        }
+
+        /* ATMO badge */
+        const badge = document.getElementById('status-badge');
+        if (data.status_fr) {
+          badge.textContent = data.status_fr;
+          badge.className =
+            "ml-2 px-2 py-1 text-xs font-semibold rounded-full " +
+            (STATUS_STYLES[data.status_fr] || "bg-gray-200 text-gray-800");
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
         }
 
       } catch (err) {

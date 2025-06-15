@@ -14,7 +14,40 @@ models = {
 }
 
 scaler = MinMaxScaler(feature_range=(0,1))
+ATMO_THRESHOLDS = {
+    'PM2.5':  [(0, 10,  "Bon"),
+               (10, 20, "Moyen"),
+               (20, 25, "Dégradé"),
+               (25, 50, "Mauvais"),
+               (50, 75, "Très mauvais"),
+               (75, np.inf, "Extrêmement mauvais")],
 
+    'PM10':   [(0, 20,  "Bon"),
+               (20, 40, "Moyen"),
+               (40, 50, "Dégradé"),
+               (50,100, "Mauvais"),
+               (100,150,"Très mauvais"),
+               (150,np.inf,"Extrêmement mauvais")],
+
+    'NO2':    [(0, 40,  "Bon"),
+               (40, 90, "Moyen"),
+               (90,120, "Dégradé"),
+               (120,230,"Mauvais"),
+               (230,340,"Très mauvais"),
+               (340,np.inf,"Extrêmement mauvais")],
+
+    # Vous n’avez pas de modèle O3 ou SO2 ici,
+    # mais on pourrait les ajouter de la même façon
+}
+
+def atmo_status(pollutant: str, value: float) -> str:
+    """Retourne l’étiquette ATMO en français pour le polluant donné."""
+    if pollutant not in ATMO_THRESHOLDS:
+        return "Indisponible"
+    for low, high, label in ATMO_THRESHOLDS[pollutant]:
+        if low <= value < high:
+            return label
+    return "Indisponible"
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -29,31 +62,32 @@ def predict():
         if model is None:
             return jsonify(success=False, error='Invalid model type')
 
-        # 1) scale the batch to [0,1]
+        # 1) mise à l’échelle
         col        = values.reshape(-1,1)
         scaled_col = scaler.fit_transform(col)
         X          = scaled_col.reshape(1, 10, 1)
 
-        # 2) predict in normalized space
-        pred_norm_np = model.predict(X).flatten()[0]
+        # 2) prédiction normalisée
+        pred_norm_np = model.predict(X, verbose=0).flatten()[0]
 
-        # 3) inverse‐scale back to original units
+        # 3) remise à l’échelle d’origine
         pred_orig_np = scaler.inverse_transform([[pred_norm_np]])[0,0]
+        pred         = float(pred_orig_np)
 
-        # cast to native Python
-        pred = float(pred_orig_np)
+        # 4) calcul du statut ATMO
+        status = atmo_status(model_type if model_type!="PM2.5" else "PM2.5",
+                             pred)
 
         response = {
-            'success': True,
-            'prediction': pred  # this is your “real-world” prediction
+            'success'    : True,
+            'prediction' : pred,      # valeur brute (µg/m³)
+            'status_fr'  : status     # étiquette qualitative
         }
 
-        # 4) optional RMSE if real_value provided
+        # 5) optionnel : RMSE si real_value fourni
         if data.get('real_value') is not None:
-            real_val = float(data['real_value'])
-            # RMSE for single sample = abs error
-            rmse = float(np.sqrt((pred - real_val)**2))
-            response['rmse'] = rmse
+            real_val      = float(data['real_value'])
+            response['rmse'] = abs(pred - real_val)  # identique à RMSE 1 échantillon
 
         return jsonify(response)
 
