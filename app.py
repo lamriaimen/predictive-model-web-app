@@ -8,10 +8,10 @@ app = Flask(__name__)
 
 # Load your models
 models = {
-    'PM2.5': tf.keras.models.load_model('models/PM25_Forecaster.keras'),
-    'C6H6':  tf.keras.models.load_model('models/C6H6_Forecaster.keras'),
-    'CO':    tf.keras.models.load_model('models/CO_Forecaster.keras'),
-    'NO2':   tf.keras.models.load_model('models/NO2_Forecaster.keras'),
+    'PM2.5': tf.keras.models.load_model('models/PM25_Forecaster.keras', compile=False),
+    'C6H6':  tf.keras.models.load_model('models/C6H6_Forecaster.keras', compile=False),
+    'CO':    tf.keras.models.load_model('models/CO_Forecaster.keras', compile=False),
+    'NO2':   tf.keras.models.load_model('models/NO2_Forecaster.keras', compile=False),
 }
 
 scalers = {
