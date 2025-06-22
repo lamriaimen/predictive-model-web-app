@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import numpy as np
-import tensorflow as tf
+import keras
 from sklearn.preprocessing import MinMaxScaler
 import joblib
 
@@ -8,10 +8,10 @@ app = Flask(__name__)
 
 # Load your models
 models = {
-    'PM2.5': tf.keras.models.load_model('models/PM25_Forecaster.keras', compile=False),
-    'C6H6':  tf.keras.models.load_model('models/C6H6_Forecaster.keras', compile=False),
-    'CO':    tf.keras.models.load_model('models/CO_Forecaster.keras', compile=False),
-    'NO2':   tf.keras.models.load_model('models/NO2_Forecaster.keras', compile=False),
+    'PM2.5': keras.saving.load_model('models/PM25_Forecaster.keras', compile=False),
+    'C6H6':  keras.saving.load_model('models/C6H6_Forecaster.keras', compile=False),
+    'CO':    keras.saving.load_model('models/CO_Forecaster.keras', compile=False),
+    'NO2':   keras.saving.load_model('models/NO2_Forecaster.keras', compile=False),
 }
 
 scalers = {
