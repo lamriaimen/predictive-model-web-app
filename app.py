@@ -1,8 +1,21 @@
 from flask import Flask, render_template, request, jsonify
 import numpy as np
+import sys
 import keras
 from sklearn.preprocessing import MinMaxScaler
 import joblib
+
+# ---------------------------------------------------------------------------
+# Compatibility shim for joblib
+# ---------------------------------------------------------------------------
+# Some of the serialized scaler objects in ``scalers/`` were pickled in an
+# environment where ``numpy._core`` was available.  Newer NumPy versions expose
+# the same module as ``numpy.core``.  Joblib uses the module name stored inside
+# the pickle, so loading the scalers can fail with ``ModuleNotFoundError:``
+# ``No module named 'numpy._core'``.  By registering an alias in ``sys.modules``
+# before loading the scalers we ensure joblib can find the expected module
+# without having to re-create the scaler files.
+sys.modules['numpy._core'] = np.core
 
 app = Flask(__name__)
 
