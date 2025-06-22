@@ -71,7 +71,7 @@ def predict():
 
         # 1) mise à l’échelle
         col        = values.reshape(-1,1)
-        scaled_col = scaler.fit_transform(col)
+        scaled_col = scaler.transform(col)
         X          = scaled_col.reshape(1, 10, 1)
 
         # 2) prédiction normalisée
