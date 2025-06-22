@@ -1,6 +1,6 @@
+tensorflow-cpu==2.14.0
+numpy==1.24.3
+scikit-learn==1.2.2
+joblib==1.2.0
 flask
-numpy
-tensorflow-cpu==2.14.0     # or tensorflow if you really need it
-scikit-learn
-joblib
 gunicorn==20.1.0
