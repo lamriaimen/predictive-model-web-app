@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import numpy as np
+import numpy._core  # ensure joblib can unpickle scalers
 import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 import joblib
